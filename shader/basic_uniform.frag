@@ -9,6 +9,7 @@ layout(binding=2) uniform sampler2D SecondaryTex;
 
 layout (location = 0) out vec4 FragColor;
 
+
 uniform struct SpotLightInfo {
 	vec3 Position; //light position
 	vec3 La; // ambient

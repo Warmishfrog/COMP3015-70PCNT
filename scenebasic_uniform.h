@@ -17,6 +17,10 @@
 class SceneBasic_Uniform : public Scene
 {
 private:
+    GLuint sprites;
+	int numSprites;
+    float* locations;
+
     float tPrev;
     float angle;
     float Ytranslation;
@@ -27,8 +31,8 @@ private:
     GLuint Rock, Lava;
     SkyBox Sky;
 
-    GLSLProgram prog, skyProg;
-    void setMatrices(GLSLProgram &p);
+    GLSLProgram prog, skyProg, spriteProg;
+    void setMatrices(GLSLProgram &p, int progType);
     void compile();
 
 public:

@@ -54,22 +54,53 @@ SceneBasic_Uniform::SceneBasic_Uniform() :
 void SceneBasic_Uniform::initScene()
 {
 	compile();
+	//glClearColor(0.5f, 0.5f, 0.5f, 1.0f); //
+
 	glEnable(GL_DEPTH_TEST);
 	glDepthMask(GL_FALSE);
+
 	model = mat4(1.0f);
-	/*
-	view = glm::lookAt(
-		vec3(3.0f, 3.0f, 4.0f), //camera position
-		vec3(0.0f, 0.75f, 0.0f), //position of target
-		vec3(0.0f, 1.0f, 0.0f)); //up vector
-	/**/
 	projection = mat4(1.0f);
 	GLuint cubeTex = Texture::loadHdrCubeMap("media/texture/cube/pisa-hdr/pisa");
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_CUBE_MAP, cubeTex);
-	glDepthMask(GL_TRUE);
 
-	Ytranslation = -0.5f;
+	spriteProg.use();
+	//sprites
+	numSprites = 50;
+	locations = new float[numSprites * 3];
+	srand((unsigned int)(time(0)));
+
+	for (int i = 0; i < numSprites; i++) {
+		vec3 p(((float)rand() / RAND_MAX * 10.0f) - 2.0f,
+			1.0f, //no height 
+			((float)rand() / RAND_MAX * 10.0f) - 2.0f);
+		locations[i * 3] = p.x;
+		locations[i * 3 + 1] = p.y;
+		locations[i * 3 + 2] = p.z;
+	}
+
+	GLuint handle;
+	glClear(GL_DEPTH_BUFFER_BIT); //CLEAR THE DEPTH BUFFER
+	glGenBuffers(1, &handle);
+	glBindBuffer(GL_ARRAY_BUFFER, handle);
+	glBufferData(GL_ARRAY_BUFFER, numSprites * 3 * sizeof(float), locations, GL_STATIC_DRAW);
+	delete[] locations;
+	glGenVertexArrays(1, &sprites);
+	glBindVertexArray(sprites);
+	glBindBuffer(GL_ARRAY_BUFFER, handle);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, ((GLubyte*)NULL + (0)));
+	glEnableVertexAttribArray(0);
+	glBindVertexArray(0);
+	//
+	const char* StexName = "media/texture/flower.png";
+	Texture::loadTexture(StexName);
+	spriteProg.setUniform("SpriteTex", 0);
+	spriteProg.setUniform("Size2", 0.5f);
+	/**/
+	prog.use();
+
+	Ytranslation = -0.5f; //for animation
 
 	GLuint Rock = Texture::loadTexture("media/texture/cement.jpg");
 	GLuint Lava = Texture::loadTexture("media/texture/fire.png");
@@ -79,11 +110,13 @@ void SceneBasic_Uniform::initScene()
 	glBindTexture(GL_TEXTURE_2D, Lava);	
 	/**/
 
+	glDepthMask(GL_TRUE);
+
 	//The Fog is coming
-		prog.setUniform("Fog.MaxDist", 30.0f);
+		prog.setUniform("Fog.MaxDist", 0.0f); //zero means no fog //30 default
 		prog.setUniform("Fog.MinDist", 1.0f);
 		prog.setUniform("Fog.Color", vec3(0.3f, 0.2f, 0.2f)); //RGB higher is brighter
-
+		/**/
 	//generate 3 lights
 		float x, z;
 		for (int i = 0; i < 3; i++) {  
@@ -109,6 +142,7 @@ void SceneBasic_Uniform::initScene()
 		prog.setUniform("Spot.La", vec3(0.5f, 0.4f, 0.4f));
 		prog.setUniform("Spot.Exponent", 100.0f);
 		prog.setUniform("Spot.Cutoff", glm::radians(45.0f));
+		
 }
 
 void SceneBasic_Uniform::compile()
@@ -116,9 +150,15 @@ void SceneBasic_Uniform::compile()
 	try {
 		prog.compileShader("shader/basic_uniform.vert");
 		prog.compileShader("shader/basic_uniform.frag");
+		//prog.compileShader("shader/basic_uniform.gs");
 		prog.link();
 		prog.use();
-		
+		//
+		spriteProg.compileShader("shader/point_sprite.vert");
+		spriteProg.compileShader("shader/point_sprite.frag");
+		spriteProg.compileShader("shader/point_sprite.gs");
+		spriteProg.link();
+		//
 		skyProg.compileShader("shader/skybox.vert");
 		skyProg.compileShader("shader/skybox.frag");
 		skyProg.link();
@@ -131,18 +171,16 @@ void SceneBasic_Uniform::compile()
 
 void SceneBasic_Uniform::update( float t )
 {
-	//spin
-	
+	//animation
 	float deltaT = t - tPrev;
 	if (tPrev == 0.0f) deltaT = 0.0f;
 	tPrev = t;
 	angle += 2.0f * deltaT;
 	if (angle > glm::two_pi<float>()) angle -= glm::two_pi<float>();
-	/**/
-	Ytranslation = (sin(0.8*t) * 0.2f);
+	Ytranslation = (sin(0.8*t) * 0.2f); //skeleton bob
 
-	GLFWwindow* window = glfwGetCurrentContext();
 
+	GLFWwindow* window = glfwGetCurrentContext(); //get current window
 	//inputs for camera movement
 	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) //w forward
 		cameraPos += cameraSpeed * cameraFront;
@@ -156,6 +194,10 @@ void SceneBasic_Uniform::update( float t )
 		cameraPos += cameraSpeed * cameraUp;
 	if (glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS) // ctrl down
 		cameraPos -= cameraSpeed * cameraUp;
+	if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
+		cameraSpeed = 0.05f;
+	else
+		cameraSpeed = 0.01f;
 	//inputs for camera orientation
 	if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
 		pitch += 0.25f;
@@ -202,8 +244,9 @@ void SceneBasic_Uniform::render()
 	// Render the skybox
 		//skyProg.use(); //this breaks everything 
 		model = mat4(1.0f);
-		setMatrices(prog);
+		skyProg.setUniform("MVP", projection * view * model);
 		Sky.render();
+		prog.use();
 		/**/
 	
 	//Render Spotlight
@@ -226,7 +269,7 @@ void SceneBasic_Uniform::render()
 		model = glm::rotate(model, glm::radians(20.0f), vec3(0.0f, 0.0f, 1.0f));
 		model = glm::translate(model, vec3(0.0f, Ytranslation-5.0f, 0.0f));
 		model = glm::scale(model, vec3(10.0f));
-		setMatrices(prog);
+		setMatrices(prog, 1);
 		mesh->render();
 
 	// Render the rock ring
@@ -238,7 +281,7 @@ void SceneBasic_Uniform::render()
 
 		model = mat4(1.0f);
 		model = glm::rotate(model, glm::radians(90.0f), vec3(1.0f, 0.0f, 0.0f));
-		setMatrices(prog);
+		setMatrices(prog, 1);
 		rockRing.render();
 
 	// Render the lava pool
@@ -251,7 +294,7 @@ void SceneBasic_Uniform::render()
 		model = mat4(1.0f);
 		model = glm::rotate(model, glm::radians(90.0f), vec3(1.0f, 0.0f, 0.0f));
 		model = glm::scale(model, vec3(4.0f, 4.0f, 0.5f));
-		setMatrices(prog);
+		setMatrices(prog, 1);
 		lavaPool.render();
 
 	// Render the plane
@@ -263,8 +306,16 @@ void SceneBasic_Uniform::render()
 
 		model = mat4(1.0f);
 		model = glm::translate(model, vec3(0.0f, -0.45f, 0.0f));
-		setMatrices(prog);
+		setMatrices(prog, 1);
 		plane.render();
+		
+		//
+		spriteProg.use();
+		glBindVertexArray(sprites);
+		glDrawArrays(GL_POINTS, 0, numSprites);
+		glFinish();
+		/**/
+		prog.use();
 
 }
 
@@ -273,13 +324,16 @@ void SceneBasic_Uniform::resize(int w, int h)
     glViewport(0, 0, w, h);
     width = w;
 	height = h;
-	projection = glm::perspective(glm::radians(70.0f), (float)w / h, 0.3f, 100.0f);
+	projection = glm::perspective(glm::radians(70.0f), (float)w / h, 0.3f, 1000.0f);
 }
 
-void SceneBasic_Uniform::setMatrices(GLSLProgram &p)
+void SceneBasic_Uniform::setMatrices(GLSLProgram& p, int progType)
 {
 	mat4 mv = view * model;
-	p.setUniform("ModelViewMatrix", mv);
-	p.setUniform("NormalMatrix", glm::mat3(vec3(mv[0]), vec3(mv[1]), vec3(mv[2])));
-	p.setUniform("MVP", projection * mv);
+
+		p.setUniform("ModelViewMatrix", mv);
+		p.setUniform("NormalMatrix", glm::mat3(vec3(mv[0]), vec3(mv[1]), vec3(mv[2])));
+		p.setUniform("MVP", projection * mv);
+		p.setUniform("ProjectionMatrix", projection);
+	
 }
