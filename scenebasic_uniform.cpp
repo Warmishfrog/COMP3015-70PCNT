@@ -45,8 +45,8 @@ SceneBasic_Uniform::SceneBasic_Uniform() :
 	angle(0),
 	rockRing(2.5f * 2.0f, 0.4f * 2.0f, 50, 10), //(float MajorRadius, float MinorRadius, int numMajor, int numMinor)
 	lavaPool(0.2* 2.0f, 0.5f* 2.0f, 50, 10),
-	plane(100.0f, 100.0f, 1, 1), //(float xsize, float zsize, int xdivs, int zdivs)
-	Sky(100.0f)
+	plane(150.0f, 150.0f, 1, 1), //(float xsize, float zsize, int xdivs, int zdivs)
+	Sky(150.0f)
 {
 	mesh = ObjMesh::load("media/Skeleton/Skelly.obj", true); //load custom model here
 }
@@ -67,18 +67,20 @@ void SceneBasic_Uniform::initScene()
 
 	spriteProg.use();
 	//sprites
-	numSprites = 50;
+	numSprites = 3000;
 	locations = new float[numSprites * 3];
 	srand((unsigned int)(time(0)));
 
+	float roomSize = 150.0f;
 	for (int i = 0; i < numSprites; i++) {
-		vec3 p(((float)rand() / RAND_MAX * 10.0f) - 2.0f,
-			1.0f, //no height 
-			((float)rand() / RAND_MAX * 10.0f) - 2.0f);
+		vec3 p(((float)rand() / RAND_MAX * roomSize) - roomSize * 0.5f,
+			1.0f + ((float)rand() / RAND_MAX) * 2.0f,
+			((float)rand() / RAND_MAX * roomSize) - roomSize * 0.5f);
 		locations[i * 3] = p.x;
 		locations[i * 3 + 1] = p.y;
 		locations[i * 3 + 2] = p.z;
 	}
+
 
 	GLuint handle;
 	glClear(GL_DEPTH_BUFFER_BIT); //CLEAR THE DEPTH BUFFER
@@ -93,10 +95,11 @@ void SceneBasic_Uniform::initScene()
 	glEnableVertexAttribArray(0);
 	glBindVertexArray(0);
 	//
-	const char* StexName = "media/texture/flower.png";
-	Texture::loadTexture(StexName);
+	GLuint Stex = Texture::loadTexture("media/texture/fire.png");
+	glActiveTexture(GL_TEXTURE3);
+	glBindTexture(GL_TEXTURE_2D, Stex);
 	spriteProg.setUniform("SpriteTex", 0);
-	spriteProg.setUniform("Size2", 0.5f);
+	spriteProg.setUniform("Size2", 0.15f);
 	/**/
 	prog.use();
 
@@ -113,7 +116,7 @@ void SceneBasic_Uniform::initScene()
 	glDepthMask(GL_TRUE);
 
 	//The Fog is coming
-		prog.setUniform("Fog.MaxDist", 0.0f); //zero means no fog //30 default
+		prog.setUniform("Fog.MaxDist", 30.0f); //zero means no fog //30 default
 		prog.setUniform("Fog.MinDist", 1.0f);
 		prog.setUniform("Fog.Color", vec3(0.3f, 0.2f, 0.2f)); //RGB higher is brighter
 		/**/
@@ -148,17 +151,21 @@ void SceneBasic_Uniform::initScene()
 void SceneBasic_Uniform::compile()
 {
 	try {
+		//
+		spriteProg.compileShader("shader/point_sprite.vert");
+		spriteProg.compileShader("shader/point_sprite.frag");
+		spriteProg.compileShader("shader/point_sprite.gs");
+		spriteProg.link();
+		spriteProg.use();
+		/**/
+
 		prog.compileShader("shader/basic_uniform.vert");
 		prog.compileShader("shader/basic_uniform.frag");
 		//prog.compileShader("shader/basic_uniform.gs");
 		prog.link();
 		prog.use();
 		//
-		spriteProg.compileShader("shader/point_sprite.vert");
-		spriteProg.compileShader("shader/point_sprite.frag");
-		spriteProg.compileShader("shader/point_sprite.gs");
-		spriteProg.link();
-		//
+
 		skyProg.compileShader("shader/skybox.vert");
 		skyProg.compileShader("shader/skybox.frag");
 		skyProg.link();
@@ -190,10 +197,12 @@ void SceneBasic_Uniform::update( float t )
 		cameraPos -= glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
 	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) //d right
 		cameraPos += glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
+	//up and down
 	if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) // space up
 		cameraPos += cameraSpeed * cameraUp;
 	if (glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS) // ctrl down
 		cameraPos -= cameraSpeed * cameraUp;
+	/**/
 	if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
 		cameraSpeed = 0.05f;
 	else
@@ -239,7 +248,16 @@ void SceneBasic_Uniform::render()
 	front.y = sin(glm::radians(pitch));
 	front.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
 	cameraFront = glm::normalize(front);
+
+	// Update the camera position if it's within the range
+	if (cameraPos.x <= -74.0f || cameraPos.x >= 74.0f ||
+		cameraPos.z <= -74.0f || cameraPos.z >= 74.0f)
+	{
+		cameraPos = glm::vec3(10.0f, 2.5f, 10.0f);
+	}
+	cameraPos.y = 2.0f;
 	view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
+
 
 	// Render the skybox
 		//skyProg.use(); //this breaks everything 
@@ -310,7 +328,12 @@ void SceneBasic_Uniform::render()
 		plane.render();
 		
 		//
+
 		spriteProg.use();
+		model = mat4(1.0f);
+		mat4 mv = view * model;
+		spriteProg.setUniform("ModelViewMatrix", mv);
+		spriteProg.setUniform("ProjectionMatrix", projection);
 		glBindVertexArray(sprites);
 		glDrawArrays(GL_POINTS, 0, numSprites);
 		glFinish();
@@ -324,7 +347,7 @@ void SceneBasic_Uniform::resize(int w, int h)
     glViewport(0, 0, w, h);
     width = w;
 	height = h;
-	projection = glm::perspective(glm::radians(70.0f), (float)w / h, 0.3f, 1000.0f);
+	projection = glm::perspective(glm::radians(70.0f), (float)w / h, 0.5f, 1000.0f);
 }
 
 void SceneBasic_Uniform::setMatrices(GLSLProgram& p, int progType)
@@ -334,6 +357,6 @@ void SceneBasic_Uniform::setMatrices(GLSLProgram& p, int progType)
 		p.setUniform("ModelViewMatrix", mv);
 		p.setUniform("NormalMatrix", glm::mat3(vec3(mv[0]), vec3(mv[1]), vec3(mv[2])));
 		p.setUniform("MVP", projection * mv);
-		p.setUniform("ProjectionMatrix", projection);
+
 	
 }

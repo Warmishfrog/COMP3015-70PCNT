@@ -8,7 +8,6 @@ uniform mat4 ProjectionMatrix;
 
 out vec2 TexCoord;
 
-
 void main()
 {
 	mat4 m = ProjectionMatrix;

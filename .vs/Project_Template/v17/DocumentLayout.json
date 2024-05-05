@@ -3,20 +3,20 @@
   "WorkspaceRootPath": "C:\\--------------------workspace laptop\\comp3015\\COMP3015-70PCNT\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{2424A6AC-480B-441A-94EA-86C5C10C6ABF}|Project_Template.vcxproj|C:\\--------------------workspace laptop\\comp3015\\COMP3015-70PCNT\\shader\\point_sprite.vert||{8B382828-6202-11D1-8870-0000F87579D2}",
-      "RelativeMoniker": "D:0:0:{2424A6AC-480B-441A-94EA-86C5C10C6ABF}|Project_Template.vcxproj|solutionrelative:shader\\point_sprite.vert||{8B382828-6202-11D1-8870-0000F87579D2}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{2424A6AC-480B-441A-94EA-86C5C10C6ABF}|Project_Template.vcxproj|C:\\--------------------workspace laptop\\comp3015\\COMP3015-70PCNT\\shader\\point_sprite.gs||{8B382828-6202-11D1-8870-0000F87579D2}",
-      "RelativeMoniker": "D:0:0:{2424A6AC-480B-441A-94EA-86C5C10C6ABF}|Project_Template.vcxproj|solutionrelative:shader\\point_sprite.gs||{8B382828-6202-11D1-8870-0000F87579D2}"
+      "AbsoluteMoniker": "D:0:0:{2424A6AC-480B-441A-94EA-86C5C10C6ABF}|Project_Template.vcxproj|C:\\--------------------workspace laptop\\comp3015\\COMP3015-70PCNT\\scenebasic_uniform.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{2424A6AC-480B-441A-94EA-86C5C10C6ABF}|Project_Template.vcxproj|solutionrelative:scenebasic_uniform.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{2424A6AC-480B-441A-94EA-86C5C10C6ABF}|Project_Template.vcxproj|C:\\--------------------workspace laptop\\comp3015\\COMP3015-70PCNT\\shader\\point_sprite.frag||{8B382828-6202-11D1-8870-0000F87579D2}",
       "RelativeMoniker": "D:0:0:{2424A6AC-480B-441A-94EA-86C5C10C6ABF}|Project_Template.vcxproj|solutionrelative:shader\\point_sprite.frag||{8B382828-6202-11D1-8870-0000F87579D2}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{2424A6AC-480B-441A-94EA-86C5C10C6ABF}|Project_Template.vcxproj|C:\\--------------------workspace laptop\\comp3015\\COMP3015-70PCNT\\scenebasic_uniform.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
-      "RelativeMoniker": "D:0:0:{2424A6AC-480B-441A-94EA-86C5C10C6ABF}|Project_Template.vcxproj|solutionrelative:scenebasic_uniform.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+      "AbsoluteMoniker": "D:0:0:{2424A6AC-480B-441A-94EA-86C5C10C6ABF}|Project_Template.vcxproj|C:\\--------------------workspace laptop\\comp3015\\COMP3015-70PCNT\\shader\\point_sprite.vert||{8B382828-6202-11D1-8870-0000F87579D2}",
+      "RelativeMoniker": "D:0:0:{2424A6AC-480B-441A-94EA-86C5C10C6ABF}|Project_Template.vcxproj|solutionrelative:shader\\point_sprite.vert||{8B382828-6202-11D1-8870-0000F87579D2}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{2424A6AC-480B-441A-94EA-86C5C10C6ABF}|Project_Template.vcxproj|C:\\--------------------workspace laptop\\comp3015\\COMP3015-70PCNT\\shader\\point_sprite.gs||{8B382828-6202-11D1-8870-0000F87579D2}",
+      "RelativeMoniker": "D:0:0:{2424A6AC-480B-441A-94EA-86C5C10C6ABF}|Project_Template.vcxproj|solutionrelative:shader\\point_sprite.gs||{8B382828-6202-11D1-8870-0000F87579D2}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{2424A6AC-480B-441A-94EA-86C5C10C6ABF}|Project_Template.vcxproj|C:\\--------------------workspace laptop\\comp3015\\COMP3015-70PCNT\\shader\\basic_uniform.frag||{8B382828-6202-11D1-8870-0000F87579D2}",
@@ -42,11 +42,11 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 0,
+          "SelectedChildIndex": 4,
           "Children": [
             {
               "$type": "Document",
-              "DocumentIndex": 0,
+              "DocumentIndex": 2,
               "Title": "point_sprite.vert",
               "DocumentMoniker": "C:\\--------------------workspace laptop\\comp3015\\COMP3015-70PCNT\\shader\\point_sprite.vert",
               "RelativeDocumentMoniker": "shader\\point_sprite.vert",
@@ -59,26 +59,26 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 2,
+              "DocumentIndex": 1,
               "Title": "point_sprite.frag",
               "DocumentMoniker": "C:\\--------------------workspace laptop\\comp3015\\COMP3015-70PCNT\\shader\\point_sprite.frag",
               "RelativeDocumentMoniker": "shader\\point_sprite.frag",
               "ToolTip": "C:\\--------------------workspace laptop\\comp3015\\COMP3015-70PCNT\\shader\\point_sprite.frag",
               "RelativeToolTip": "shader\\point_sprite.frag",
-              "ViewState": "AQIAAAAAAAAAAAAAAAAAAAsAAAABAAAA",
+              "ViewState": "AQIAAAAAAAAAAAAAAAAAAA4AAAAYAAAA",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001001|",
               "WhenOpened": "2024-05-05T12:46:18.623Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 1,
+              "DocumentIndex": 3,
               "Title": "point_sprite.gs",
               "DocumentMoniker": "C:\\--------------------workspace laptop\\comp3015\\COMP3015-70PCNT\\shader\\point_sprite.gs",
               "RelativeDocumentMoniker": "shader\\point_sprite.gs",
               "ToolTip": "C:\\--------------------workspace laptop\\comp3015\\COMP3015-70PCNT\\shader\\point_sprite.gs",
               "RelativeToolTip": "shader\\point_sprite.gs",
-              "ViewState": "AQIAAAAAAAAAAAAAAAAAAB8AAAABAAAA",
+              "ViewState": "AQIAAAAAAAAAAAAAAAAAAAgAAAASAAAA",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001001|",
               "WhenOpened": "2024-05-05T12:38:51.952Z",
               "EditorCaption": ""
@@ -97,13 +97,13 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 3,
+              "DocumentIndex": 0,
               "Title": "scenebasic_uniform.cpp",
               "DocumentMoniker": "C:\\--------------------workspace laptop\\comp3015\\COMP3015-70PCNT\\scenebasic_uniform.cpp",
               "RelativeDocumentMoniker": "scenebasic_uniform.cpp",
               "ToolTip": "C:\\--------------------workspace laptop\\comp3015\\COMP3015-70PCNT\\scenebasic_uniform.cpp",
               "RelativeToolTip": "scenebasic_uniform.cpp",
-              "ViewState": "AQIAACkBAAAAAAAAAAAqwEIBAAABAAAA",
+              "ViewState": "AQIAADcAAAAAAAAAAAAqwEUAAAAQAAAA",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
               "WhenOpened": "2024-05-04T10:21:50.074Z",
               "EditorCaption": ""
@@ -118,8 +118,7 @@
               "RelativeToolTip": "shader\\basic_uniform.frag",
               "ViewState": "AQIAAAAAAAAAAAAAAAAAABEAAAAcAAAA",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001001|",
-              "WhenOpened": "2024-05-04T10:18:44.636Z",
-              "EditorCaption": ""
+              "WhenOpened": "2024-05-04T10:18:44.636Z"
             },
             {
               "$type": "Document",
