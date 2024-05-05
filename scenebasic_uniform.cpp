@@ -46,7 +46,8 @@ SceneBasic_Uniform::SceneBasic_Uniform() :
 	rockRing(2.5f * 2.0f, 0.4f * 2.0f, 50, 10), //(float MajorRadius, float MinorRadius, int numMajor, int numMinor)
 	lavaPool(0.2* 2.0f, 0.5f* 2.0f, 50, 10),
 	plane(150.0f, 150.0f, 1, 1), //(float xsize, float zsize, int xdivs, int zdivs)
-	Sky(150.0f)
+	Sky(150.0f),
+	lightPos(0.0f, 0.0f, 0.0f, 1.0f)
 {
 	mesh = ObjMesh::load("media/Skeleton/Skelly.obj", true); //load custom model here
 }
@@ -65,43 +66,7 @@ void SceneBasic_Uniform::initScene()
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_CUBE_MAP, cubeTex);
 
-	spriteProg.use();
-	//sprites
-	numSprites = 3000;
-	locations = new float[numSprites * 3];
-	srand((unsigned int)(time(0)));
-
-	float roomSize = 150.0f;
-	for (int i = 0; i < numSprites; i++) {
-		vec3 p(((float)rand() / RAND_MAX * roomSize) - roomSize * 0.5f,
-			1.0f + ((float)rand() / RAND_MAX) * 2.0f,
-			((float)rand() / RAND_MAX * roomSize) - roomSize * 0.5f);
-		locations[i * 3] = p.x;
-		locations[i * 3 + 1] = p.y;
-		locations[i * 3 + 2] = p.z;
-	}
-
-
-	GLuint handle;
-	glClear(GL_DEPTH_BUFFER_BIT); //CLEAR THE DEPTH BUFFER
-	glGenBuffers(1, &handle);
-	glBindBuffer(GL_ARRAY_BUFFER, handle);
-	glBufferData(GL_ARRAY_BUFFER, numSprites * 3 * sizeof(float), locations, GL_STATIC_DRAW);
-	delete[] locations;
-	glGenVertexArrays(1, &sprites);
-	glBindVertexArray(sprites);
-	glBindBuffer(GL_ARRAY_BUFFER, handle);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, ((GLubyte*)NULL + (0)));
-	glEnableVertexAttribArray(0);
-	glBindVertexArray(0);
-	//
-	GLuint Stex = Texture::loadTexture("media/texture/fire.png");
-	glActiveTexture(GL_TEXTURE3);
-	glBindTexture(GL_TEXTURE_2D, Stex);
-	spriteProg.setUniform("SpriteTex", 0);
-	spriteProg.setUniform("Size2", 0.15f);
-	/**/
-	prog.use();
+	initSprites();
 
 	Ytranslation = -0.5f; //for animation
 
@@ -145,6 +110,15 @@ void SceneBasic_Uniform::initScene()
 		prog.setUniform("Spot.La", vec3(0.5f, 0.4f, 0.4f));
 		prog.setUniform("Spot.Exponent", 100.0f);
 		prog.setUniform("Spot.Cutoff", glm::radians(45.0f));
+
+		PBRprog.use();
+		PBRprog.setUniform("Light[0].L", glm::vec3(45.0f));
+		PBRprog.setUniform("Light[0].Position", view * lightPos);
+		PBRprog.setUniform("Light[1].L", glm::vec3(0.3f));
+		PBRprog.setUniform("Light[1].Position", glm::vec4(0.0f, 0.15f, -1.0f, 0.0f));
+		PBRprog.setUniform("Light[2].L", glm::vec3(45.0f));
+		PBRprog.setUniform("Light[2].Position", view *  glm::vec4(-7.0f, 3.0f, 7.0f, 1.0f));
+		prog.use();
 		
 }
 
@@ -161,10 +135,13 @@ void SceneBasic_Uniform::compile()
 
 		prog.compileShader("shader/basic_uniform.vert");
 		prog.compileShader("shader/basic_uniform.frag");
-		//prog.compileShader("shader/basic_uniform.gs");
 		prog.link();
 		prog.use();
 		//
+		PBRprog.compileShader("shader/PBR.vert");
+		PBRprog.compileShader("shader/PBR.frag");
+		PBRprog.link();
+		/**/
 
 		skyProg.compileShader("shader/skybox.vert");
 		skyProg.compileShader("shader/skybox.frag");
@@ -187,6 +164,122 @@ void SceneBasic_Uniform::update( float t )
 	Ytranslation = (sin(0.8*t) * 0.2f); //skeleton bob
 
 
+	ProcessInput();
+}
+
+void SceneBasic_Uniform::render()
+{
+	float currentFrame = glfwGetTime();
+	deltaTime = currentFrame - lastFrame;
+	lastFrame = currentFrame;
+
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	CameraMovement();
+
+	// Render the skybox
+		//skyProg.use(); //this breaks everything 
+		model = mat4(1.0f);
+		skyProg.setUniform("MVP", projection * view * model);
+		Sky.render();
+		prog.use();
+		/**/
+	
+	//Render Spotlight
+		vec4 lightPos = vec4(1.0f * cos(angle), 10.0f, 1.0f * sin(angle), 1.0f);
+		prog.setUniform("Spot.Position", vec3(view * lightPos));
+		mat3 normalMatrix = mat3(vec3(view[0]), vec3(view[1]), vec3(view[2]));
+		prog.setUniform("Spot.Direction", normalMatrix * vec3(-lightPos));
+		/**/
+
+	/*/ Render the mesh
+		prog.setUniform("Material.Kd", vec3(0.5f, 0.5f, 0.5f));
+		prog.setUniform("Material.Ka", vec3(0.1f, 0.1f, 0.1f) * 0.1f);
+		prog.setUniform("Material.Ks", vec3(0.95f, 0.95f, 0.95f));
+		prog.setUniform("Material.Shininess", 100.0f);
+		prog.setUniform("Material.TexDetail", 0);
+
+		model = mat4(1.0f);
+		model = glm::rotate(model, glm::radians(-45.0f), vec3(1.0f, 0.0f, 0.0f));
+		model = glm::rotate(model, glm::radians(45.0f), vec3(0.0f, 1.0f, 0.0f));
+		model = glm::rotate(model, glm::radians(20.0f), vec3(0.0f, 0.0f, 1.0f));
+		model = glm::translate(model, vec3(0.0f, Ytranslation-5.0f, 0.0f));
+		model = glm::scale(model, vec3(10.0f));
+		setMatrices(prog, 1);
+		mesh->render();
+		/**/
+
+		drawPBR(glm::vec3(1.5f, 0.0f, 3.0f), 0.4f, 1, glm::vec3(0.5f));
+
+	// Render the rock ring
+		prog.setUniform("Material.Kd", vec3(0.9f, 0.9f, 0.9f));
+		prog.setUniform("Material.Ka", vec3(0.5f, 0.5f, 0.5f));
+		prog.setUniform("Material.Ks", vec3(0.1f, 0.1f, 0.1f));
+		prog.setUniform("Material.Shininess", 010.0f);
+		prog.setUniform("Material.TexDetail", 2);
+
+		model = mat4(1.0f);
+		model = glm::rotate(model, glm::radians(90.0f), vec3(1.0f, 0.0f, 0.0f));
+		setMatrices(prog, 1);
+		rockRing.render();
+
+	// Render the lava pool
+		prog.setUniform("Material.Kd", vec3(0.99f, 0.99f, 0.99f));
+		prog.setUniform("Material.Ka", vec3(0.8f, 0.8f, 0.8f));
+		prog.setUniform("Material.Ks", vec3(1.0f, 1.0f, 1.0f));
+		prog.setUniform("Material.Shininess", 200.0f);
+		prog.setUniform("Material.TexDetail", 3);
+
+		model = mat4(1.0f);
+		model = glm::rotate(model, glm::radians(90.0f), vec3(1.0f, 0.0f, 0.0f));
+		model = glm::scale(model, vec3(4.0f, 4.0f, 0.5f));
+		setMatrices(prog, 1);
+		lavaPool.render();
+
+	// Render the plane
+		prog.setUniform("Material.Kd", vec3(0.1f, 0.1f, 0.1f));
+		prog.setUniform("Material.Ka", vec3(0.7f, 0.7f, 0.7f));
+		prog.setUniform("Material.Ks", vec3(0.9f, 0.9f, 0.9f));
+		prog.setUniform("Material.Shininess", 180.0f);
+		prog.setUniform("Material.TexDetail", 2);
+
+		model = mat4(1.0f);
+		model = glm::translate(model, vec3(0.0f, -0.45f, 0.0f));
+		setMatrices(prog, 1);
+		plane.render();
+		
+		spriteProg.use();
+		model = mat4(1.0f);
+		mat4 mv = view * model;
+		spriteProg.setUniform("ModelViewMatrix", mv);
+		spriteProg.setUniform("ProjectionMatrix", projection);
+		glBindVertexArray(sprites);
+		glDrawArrays(GL_POINTS, 0, numSprites);
+		glFinish();
+		/**/
+		prog.use();
+
+}
+
+void SceneBasic_Uniform::resize(int w, int h)
+{
+    glViewport(0, 0, w, h);
+    width = w;
+	height = h;
+	projection = glm::perspective(glm::radians(70.0f), (float)w / h, 0.5f, 1000.0f);
+}
+
+void SceneBasic_Uniform::setMatrices(GLSLProgram& p, int progType)
+{
+	mat4 mv = view * model;
+
+		p.setUniform("ModelViewMatrix", mv);
+		p.setUniform("NormalMatrix", glm::mat3(vec3(mv[0]), vec3(mv[1]), vec3(mv[2])));
+		p.setUniform("MVP", projection * mv);	
+}
+
+void SceneBasic_Uniform::ProcessInput()
+{
 	GLFWwindow* window = glfwGetCurrentContext(); //get current window
 	//inputs for camera movement
 	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) //w forward
@@ -233,15 +326,8 @@ void SceneBasic_Uniform::update( float t )
 	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN); //hide cursor
 }
 
-void SceneBasic_Uniform::render()
+void SceneBasic_Uniform::CameraMovement()
 {
-	float currentFrame = glfwGetTime();
-	deltaTime = currentFrame - lastFrame;
-	lastFrame = currentFrame;
-
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-
 	//camera render
 	glm::vec3 front; //for new camera orientation
 	front.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
@@ -249,7 +335,7 @@ void SceneBasic_Uniform::render()
 	front.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
 	cameraFront = glm::normalize(front);
 
-	// Update the camera position if it's within the range
+	// restart the camera position if it goes out of bounds >:)
 	if (cameraPos.x <= -74.0f || cameraPos.x >= 74.0f ||
 		cameraPos.z <= -74.0f || cameraPos.z >= 74.0f)
 	{
@@ -257,106 +343,67 @@ void SceneBasic_Uniform::render()
 	}
 	cameraPos.y = 2.0f;
 	view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
-
-
-	// Render the skybox
-		//skyProg.use(); //this breaks everything 
-		model = mat4(1.0f);
-		skyProg.setUniform("MVP", projection * view * model);
-		Sky.render();
-		prog.use();
-		/**/
-	
-	//Render Spotlight
-		vec4 lightPos = vec4(1.0f * cos(angle), 10.0f, 1.0f * sin(angle), 1.0f);
-		prog.setUniform("Spot.Position", vec3(view * lightPos));
-		mat3 normalMatrix = mat3(vec3(view[0]), vec3(view[1]), vec3(view[2]));
-		prog.setUniform("Spot.Direction", normalMatrix * vec3(-lightPos));
-		/**/
-
-	// Render the mesh
-		prog.setUniform("Material.Kd", vec3(0.5f, 0.5f, 0.5f));
-		prog.setUniform("Material.Ka", vec3(0.1f, 0.1f, 0.1f) * 0.1f);
-		prog.setUniform("Material.Ks", vec3(0.95f, 0.95f, 0.95f));
-		prog.setUniform("Material.Shininess", 100.0f);
-		prog.setUniform("Material.TexDetail", 0);
-
-		model = mat4(1.0f);
-		model = glm::rotate(model, glm::radians(-45.0f), vec3(1.0f, 0.0f, 0.0f));
-		model = glm::rotate(model, glm::radians(45.0f), vec3(0.0f, 1.0f, 0.0f));
-		model = glm::rotate(model, glm::radians(20.0f), vec3(0.0f, 0.0f, 1.0f));
-		model = glm::translate(model, vec3(0.0f, Ytranslation-5.0f, 0.0f));
-		model = glm::scale(model, vec3(10.0f));
-		setMatrices(prog, 1);
-		mesh->render();
-
-	// Render the rock ring
-		prog.setUniform("Material.Kd", vec3(0.9f, 0.9f, 0.9f));
-		prog.setUniform("Material.Ka", vec3(0.5f, 0.5f, 0.5f));
-		prog.setUniform("Material.Ks", vec3(0.1f, 0.1f, 0.1f));
-		prog.setUniform("Material.Shininess", 010.0f);
-		prog.setUniform("Material.TexDetail", 2);
-
-		model = mat4(1.0f);
-		model = glm::rotate(model, glm::radians(90.0f), vec3(1.0f, 0.0f, 0.0f));
-		setMatrices(prog, 1);
-		rockRing.render();
-
-	// Render the lava pool
-		prog.setUniform("Material.Kd", vec3(0.99f, 0.99f, 0.99f));
-		prog.setUniform("Material.Ka", vec3(0.8f, 0.8f, 0.8f));
-		prog.setUniform("Material.Ks", vec3(1.0f, 1.0f, 1.0f));
-		prog.setUniform("Material.Shininess", 200.0f);
-		prog.setUniform("Material.TexDetail", 3);
-
-		model = mat4(1.0f);
-		model = glm::rotate(model, glm::radians(90.0f), vec3(1.0f, 0.0f, 0.0f));
-		model = glm::scale(model, vec3(4.0f, 4.0f, 0.5f));
-		setMatrices(prog, 1);
-		lavaPool.render();
-
-	// Render the plane
-		prog.setUniform("Material.Kd", vec3(0.1f, 0.1f, 0.1f));
-		prog.setUniform("Material.Ka", vec3(0.7f, 0.7f, 0.7f));
-		prog.setUniform("Material.Ks", vec3(0.9f, 0.9f, 0.9f));
-		prog.setUniform("Material.Shininess", 180.0f);
-		prog.setUniform("Material.TexDetail", 2);
-
-		model = mat4(1.0f);
-		model = glm::translate(model, vec3(0.0f, -0.45f, 0.0f));
-		setMatrices(prog, 1);
-		plane.render();
-		
-		//
-
-		spriteProg.use();
-		model = mat4(1.0f);
-		mat4 mv = view * model;
-		spriteProg.setUniform("ModelViewMatrix", mv);
-		spriteProg.setUniform("ProjectionMatrix", projection);
-		glBindVertexArray(sprites);
-		glDrawArrays(GL_POINTS, 0, numSprites);
-		glFinish();
-		/**/
-		prog.use();
-
 }
 
-void SceneBasic_Uniform::resize(int w, int h)
+void SceneBasic_Uniform::initSprites()
 {
-    glViewport(0, 0, w, h);
-    width = w;
-	height = h;
-	projection = glm::perspective(glm::radians(70.0f), (float)w / h, 0.5f, 1000.0f);
+	spriteProg.use();
+
+	numSprites = 4000; //sprite count
+	locations = new float[numSprites * 3];
+	srand((unsigned int)(time(0)));
+
+	float roomSize = 150.0f; //space the sprites fill
+	for (int i = 0; i < numSprites; i++) {
+		vec3 p(((float)rand() / RAND_MAX * roomSize) - roomSize * 0.5f,
+			1.0f + ((float)rand() / RAND_MAX) * 2.0f,
+			((float)rand() / RAND_MAX * roomSize) - roomSize * 0.5f);
+		locations[i * 3] = p.x;
+		locations[i * 3 + 1] = p.y;
+		locations[i * 3 + 2] = p.z;
+	}
+
+	GLuint handle;
+	glClear(GL_DEPTH_BUFFER_BIT); //CLEAR THE DEPTH BUFFER
+	glGenBuffers(1, &handle);
+	glBindBuffer(GL_ARRAY_BUFFER, handle);
+	glBufferData(GL_ARRAY_BUFFER, numSprites * 3 * sizeof(float), locations, GL_STATIC_DRAW);
+	delete[] locations;
+	glGenVertexArrays(1, &sprites);
+	glBindVertexArray(sprites);
+	glBindBuffer(GL_ARRAY_BUFFER, handle);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, ((GLubyte*)NULL + (0)));
+	glEnableVertexAttribArray(0);
+	glBindVertexArray(0);
+	//
+	GLuint Stex = Texture::loadTexture("media/texture/fire.png");
+	glActiveTexture(GL_TEXTURE3);
+	glBindTexture(GL_TEXTURE_2D, Stex);
+	spriteProg.setUniform("SpriteTex", 0);
+	spriteProg.setUniform("Size2", 0.15f);
+	/**/
+	prog.use();
 }
 
-void SceneBasic_Uniform::setMatrices(GLSLProgram& p, int progType)
+void SceneBasic_Uniform::drawPBR(const glm::vec3& pos, float rough, int metal, const glm::vec3& color)
 {
+	PBRprog.use();
+	PBRprog.setUniform("Light[0].Position", view * lightPos);
+	model = mat4(1.0f);
+	PBRprog.setUniform("Material.Rough", rough);
+	PBRprog.setUniform("Material.Metal", metal);
+	PBRprog.setUniform("Material.Color", color);
+	//animation
+	model = glm::rotate(model, glm::radians(-45.0f), vec3(1.0f, 0.0f, 0.0f));
+	model = glm::rotate(model, glm::radians(45.0f), vec3(0.0f, 1.0f, 0.0f));
+	model = glm::rotate(model, glm::radians(20.0f), vec3(0.0f, 0.0f, 1.0f));
+	model = glm::translate(model, vec3(0.0f, Ytranslation - 5.0f, 0.0f));
+	model = glm::scale(model, vec3(10.0f));
+
 	mat4 mv = view * model;
-
-		p.setUniform("ModelViewMatrix", mv);
-		p.setUniform("NormalMatrix", glm::mat3(vec3(mv[0]), vec3(mv[1]), vec3(mv[2])));
-		p.setUniform("MVP", projection * mv);
-
-	
+	PBRprog.setUniform("ModelViewMatrix", mv);
+	PBRprog.setUniform("NormalMatrix", glm::mat3(mv));
+	PBRprog.setUniform("MVP", projection * mv);
+	mesh->render();
+	prog.use();
 }

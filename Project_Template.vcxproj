@@ -163,8 +163,9 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="shader\basic_uniform.frag" />
-    <None Include="shader\basic_uniform.gs" />
     <None Include="shader\basic_uniform.vert" />
+    <None Include="shader\PBR.frag" />
+    <None Include="shader\PBR.vert" />
     <None Include="shader\point_sprite.frag" />
     <None Include="shader\point_sprite.gs" />
     <None Include="shader\point_sprite.vert" />

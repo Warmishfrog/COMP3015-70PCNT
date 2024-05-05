@@ -79,10 +79,11 @@
     </None>
     <None Include="shader\skybox.frag" />
     <None Include="shader\skybox.vert" />
-    <None Include="shader\basic_uniform.gs" />
     <None Include="shader\point_sprite.frag" />
     <None Include="shader\point_sprite.gs" />
     <None Include="shader\point_sprite.vert" />
+    <None Include="shader\PBR.frag" />
+    <None Include="shader\PBR.vert" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="helper\scene.h">
