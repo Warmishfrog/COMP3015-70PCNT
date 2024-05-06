@@ -90,7 +90,7 @@ void SceneBasic_Uniform::initScene()
 
 	//The Fog is coming
 	prog.use();
-		prog.setUniform("Fog.MaxDist", 30.0f); //zero means no fog //30 default
+		prog.setUniform("Fog.MaxDist", 50.0f); //zero means no fog //30 default
 		prog.setUniform("Fog.MinDist", 1.0f);
 		prog.setUniform("Fog.Color", vec3(0.3f, 0.2f, 0.2f)); //RGB higher is brighter
 		/**/
@@ -98,13 +98,12 @@ void SceneBasic_Uniform::initScene()
 		//PBR type beat
 		PBRprog.use();
 		
-		PBRprog.setUniform("Light[0].L", glm::vec3(10.0f, 10.0f, 10.0f));
-		PBRprog.setUniform("Light[0].Position", view * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f));
-		
-		PBRprog.setUniform("Light[1].L", glm::vec3(0.3f, 0.0f, 0.0f));
+		PBRprog.setUniform("Light[0].L", glm::vec3(45.0f, 5.0f, 5.0f));
+		PBRprog.setUniform("Light[0].Position", view * glm::vec4(2.0f, 0.0f, 2.0f, 1.0f));		
+		PBRprog.setUniform("Light[1].L", glm::vec3(0.3f));
 		PBRprog.setUniform("Light[1].Position", glm::vec4(0, 0.15f, -1.0f, 0));
-		PBRprog.setUniform("Light[2].L", glm::vec3(5.0f, 0.0f, 0.0f));
-		PBRprog.setUniform("Light[2].Position", view * glm::vec4(-7, 3, 7, 1));
+		PBRprog.setUniform("Light[2].L", glm::vec3(35.0f));
+		PBRprog.setUniform("Light[2].Position", view * glm::vec4(-7, 5, 7, 1));
 		/**/
 		prog.use();
 		/**/
@@ -117,19 +116,19 @@ void SceneBasic_Uniform::initScene()
 			name << "lights[" << i << "].Position";
 			x = 0.5f * cosf((glm::two_pi<float>() / 3) * i);
 			z = 0.5f * sinf((glm::two_pi<float>() / 3) * i);
-			prog.setUniform(name.str().c_str(), view * glm::vec4(x, 1.2f, z + 1.0f, 1.0f));
+			prog.setUniform(name.str().c_str(), glm::vec4(x, 1.2f, z + 1.0f, 1.0f));
 		}
 
 		//intensity
-		prog.setUniform("lights[0].L", vec3(0.8f, 0.0f, 0.0f));
-		prog.setUniform("lights[1].L", vec3(0.8f, 0.0f, 0.0f));
-		prog.setUniform("lights[2].L", vec3(0.8f, 0.0f, 0.0f));
+		prog.setUniform("lights[0].L", vec3(0.4f, 0.0f, 0.0f));
+		prog.setUniform("lights[1].L", vec3(0.5f, 0.0f, 0.0f));
+		prog.setUniform("lights[2].L", vec3(0.6f, 0.0f, 0.0f));
 
 		//ambient RGB
 		prog.setUniform("lights[0].La", vec3(0.2f, 0.0f, 0.2f));
 		prog.setUniform("lights[1].La", vec3(0.2f, 0.2f, 0.0f));
 		prog.setUniform("lights[2].La", vec3(0.1f, 0.0f, 0.0f));
-
+		/**/
 		//spotlight
 		prog.setUniform("Spot.L", vec3(0.8f));
 		prog.setUniform("Spot.La", vec3(0.5f, 0.4f, 0.4f));
