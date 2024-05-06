@@ -27,7 +27,7 @@ private:
 
     Plane plane;
     Torus rockRing, lavaPool;
-    std::unique_ptr<ObjMesh> mesh;
+    std::unique_ptr<ObjMesh> mesh, cow;
     GLuint Rock, Lava;
     SkyBox Sky;
 

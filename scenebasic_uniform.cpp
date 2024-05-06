@@ -49,23 +49,30 @@ SceneBasic_Uniform::SceneBasic_Uniform() :
 	Sky(150.0f)
 {
 	mesh = ObjMesh::load("media/Skeleton/Skelly.obj", true); //load custom model here
-	mesh = ObjMesh::load("media/spot/spot_triangulated.obj", true); //load custom model here
+	cow = ObjMesh::load("media/spot/spot_triangulated.obj", true); //load custom model here
 }
 
 void SceneBasic_Uniform::initScene()
 {
 	compile();
-	resize(640, 400);
 	glClearColor(0.5f, 0.5f, 0.5f, 1.0f); //
 
 	glEnable(GL_DEPTH_TEST);
 	glDepthMask(GL_FALSE);
-
+	prog.use();
 	model = mat4(1.0f);
 	projection = mat4(1.0f);
 	GLuint cubeTex = Texture::loadHdrCubeMap("media/texture/cube/pisa-hdr/pisa");
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_CUBE_MAP, cubeTex);
+
+	//
+	view = glm::lookAt(
+		glm::vec3(2.0f, 5.0f, 5.0f),
+		glm::vec3(0.0f, 0.0f, 0.0f),
+		glm::vec3(0.0f, 0.75f, 0.0f)
+	);
+	/**/
 
 	initSprites();
 
@@ -82,10 +89,27 @@ void SceneBasic_Uniform::initScene()
 	glDepthMask(GL_TRUE);
 
 	//The Fog is coming
-		prog.setUniform("Fog.MaxDist", 50.0f); //zero means no fog //30 default
+	prog.use();
+		prog.setUniform("Fog.MaxDist", 30.0f); //zero means no fog //30 default
 		prog.setUniform("Fog.MinDist", 1.0f);
 		prog.setUniform("Fog.Color", vec3(0.3f, 0.2f, 0.2f)); //RGB higher is brighter
 		/**/
+
+		//PBR type beat
+		PBRprog.use();
+		
+		PBRprog.setUniform("Light[0].L", glm::vec3(10.0f, 10.0f, 10.0f));
+		PBRprog.setUniform("Light[0].Position", view * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f));
+		
+		PBRprog.setUniform("Light[1].L", glm::vec3(0.3f, 0.0f, 0.0f));
+		PBRprog.setUniform("Light[1].Position", glm::vec4(0, 0.15f, -1.0f, 0));
+		PBRprog.setUniform("Light[2].L", glm::vec3(5.0f, 0.0f, 0.0f));
+		PBRprog.setUniform("Light[2].Position", view * glm::vec4(-7, 3, 7, 1));
+		/**/
+		prog.use();
+		/**/
+
+
 	//generate 3 lights
 		float x, z;
 		for (int i = 0; i < 3; i++) {  
@@ -97,7 +121,7 @@ void SceneBasic_Uniform::initScene()
 		}
 
 		//intensity
-		prog.setUniform("lights[0].L", vec3(0.8f,0.0f, 0.0f));
+		prog.setUniform("lights[0].L", vec3(0.8f, 0.0f, 0.0f));
 		prog.setUniform("lights[1].L", vec3(0.8f, 0.0f, 0.0f));
 		prog.setUniform("lights[2].L", vec3(0.8f, 0.0f, 0.0f));
 
@@ -113,15 +137,6 @@ void SceneBasic_Uniform::initScene()
 		prog.setUniform("Spot.Cutoff", glm::radians(45.0f));
 		/**/
 
-		//PBR type beat
-		PBRprog.use();
-		PBRprog.setUniform("Light[0].L", glm::vec3(45.0f));
-		PBRprog.setUniform("Light[0].Position", view * glm::vec4(4.0f, 4.0f, 4.0f, 1.0f));
-		PBRprog.setUniform("Light[1].L", glm::vec3(0.3f));
-		PBRprog.setUniform("Light[1].Position", glm::vec4(0, 0.15f, -1.0f, 0));
-		PBRprog.setUniform("Light[2].L", glm::vec3(45.0f));
-		PBRprog.setUniform("Light[2].Position", view *  glm::vec4(-7, 3, 7, 1));
-		prog.use();
 		
 }
 
@@ -136,14 +151,16 @@ void SceneBasic_Uniform::compile()
 		spriteProg.use();
 		/**/
 
+		PBRprog.compileShader("shader/PBR.vert");
+		PBRprog.compileShader("shader/PBR.frag");
+		PBRprog.link();
+		PBRprog.use();
+		/**/
 		prog.compileShader("shader/basic_uniform.vert");
 		prog.compileShader("shader/basic_uniform.frag");
 		prog.link();
 		prog.use();
 		//
-		PBRprog.compileShader("shader/PBR.vert");
-		PBRprog.compileShader("shader/PBR.frag");
-		PBRprog.link();
 		/**/
 
 		skyProg.compileShader("shader/skybox.vert");
@@ -174,22 +191,8 @@ void SceneBasic_Uniform::render()
 	float currentFrame = glfwGetTime(); 
 	deltaTime = currentFrame - lastFrame;
 	lastFrame = currentFrame;
-
+	
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-	PBRprog.use();
-	PBRprog.setUniform("Light[0].Position", view * lightPosPBR);
-	model = glm::mat4(1.0f);
-	PBRprog.setUniform("Material.Rough", 0.9f);
-	PBRprog.setUniform("Material.Metal", 0);
-	PBRprog.setUniform("Material.Color", glm::vec3(0.2f));
-	glm::mat4 mv2 = view * model;
-	PBRprog.setUniform("ModelViewMatrix", mv2);
-	PBRprog.setUniform("NormalMatrix", glm::mat3(mv2));
-	PBRprog.setUniform("MVP", projection * mv2);
-	plane.render();
-
-	prog.use();
 
 
 	CameraMovement();
@@ -200,36 +203,17 @@ void SceneBasic_Uniform::render()
 		skyProg.setUniform("MVP", projection * view * model);
 		Sky.render();
 		prog.use();
-		/**/
+		//
 	
 	//Render Spotlight
 		vec4 lightPos = vec4(1.0f * cos(angle), 10.0f, 1.0f * sin(angle), 1.0f);
 		prog.setUniform("Spot.Position", vec3(view * lightPos));
 		mat3 normalMatrix = mat3(vec3(view[0]), vec3(view[1]), vec3(view[2]));
 		prog.setUniform("Spot.Direction", normalMatrix * vec3(-lightPos));
-		/**/
+		//
 
-	/*/ Render the mesh
-		prog.setUniform("Material.Kd", vec3(0.5f, 0.5f, 0.5f));
-		prog.setUniform("Material.Ka", vec3(0.1f, 0.1f, 0.1f) * 0.1f);
-		prog.setUniform("Material.Ks", vec3(0.95f, 0.95f, 0.95f));
-		prog.setUniform("Material.Shininess", 100.0f);
-		prog.setUniform("Material.TexDetail", 0);
-
-		model = mat4(1.0f);
-		model = glm::rotate(model, glm::radians(-45.0f), vec3(1.0f, 0.0f, 0.0f));
-		model = glm::rotate(model, glm::radians(45.0f), vec3(0.0f, 1.0f, 0.0f));
-		model = glm::rotate(model, glm::radians(20.0f), vec3(0.0f, 0.0f, 1.0f));
-		model = glm::translate(model, vec3(0.0f, Ytranslation-5.0f, 0.0f));
-		model = glm::scale(model, vec3(10.0f));
-		setMatrices(prog, 1);
-		mesh->render();
-		/**/
-
-		PBRprog.use();
-		PBRprog.setUniform("Light[0].Position", view * lightPosPBR);
-		prog.use();
-		//drawPBRmesh(glm::vec3(0.0f), 0.4f, 0, glm::vec3(0.5f, 0.4f, 0.4f));
+	drawPBRmesh(glm::vec3(0.0f), 0.6f, 0, glm::vec3(0.4f, 0.4f, 0.4f)); //skelly bob
+	
 
 	// Render the rock ring
 		prog.setUniform("Material.Kd", vec3(0.9f, 0.9f, 0.9f));
@@ -266,7 +250,7 @@ void SceneBasic_Uniform::render()
 		model = mat4(1.0f);
 		model = glm::translate(model, vec3(0.0f, -0.45f, 0.0f));
 		setMatrices(prog, 1);
-		//plane.render();
+		plane.render();
 		
 		spriteProg.use();
 		model = mat4(1.0f);
@@ -276,8 +260,10 @@ void SceneBasic_Uniform::render()
 		glBindVertexArray(sprites);
 		glDrawArrays(GL_POINTS, 0, numSprites);
 		glFinish();
-		/**/
+		//
 		prog.use();
+
+		/**/
 
 }
 
@@ -292,10 +278,11 @@ void SceneBasic_Uniform::resize(int w, int h)
 void SceneBasic_Uniform::setMatrices(GLSLProgram& p, int progType)
 {
 	mat4 mv = view * model;
-
+	
 		p.setUniform("ModelViewMatrix", mv);
 		p.setUniform("NormalMatrix", glm::mat3(vec3(mv[0]), vec3(mv[1]), vec3(mv[2])));
-		p.setUniform("MVP", projection * mv);	
+		p.setUniform("MVP", projection * mv);
+	
 }
 
 void SceneBasic_Uniform::ProcessInput()
@@ -361,7 +348,7 @@ void SceneBasic_Uniform::CameraMovement()
 	{
 		cameraPos = glm::vec3(10.0f, 2.5f, 10.0f);
 	}
-	//cameraPos.y = 2.0f;
+	cameraPos.y = 2.0f;
 	view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
 }
 
@@ -369,7 +356,7 @@ void SceneBasic_Uniform::initSprites()
 {
 	spriteProg.use();
 
-	numSprites = 4000; //sprite count
+	numSprites = 5000; //sprite count
 	locations = new float[numSprites * 3];
 	srand((unsigned int)(time(0)));
 
@@ -413,20 +400,15 @@ void SceneBasic_Uniform::drawPBRmesh(const glm::vec3& pos, float rough, int meta
 	PBRprog.setUniform("Material.Color", color);
 	//animation
 	model = mat4(1.0f);
-	/*/
+	//
 	model = glm::rotate(model, glm::radians(-45.0f), vec3(1.0f, 0.0f, 0.0f));
 	model = glm::rotate(model, glm::radians(45.0f), vec3(0.0f, 1.0f, 0.0f));
 	model = glm::rotate(model, glm::radians(20.0f), vec3(0.0f, 0.0f, 1.0f));
 	model = glm::translate(model, vec3(0.0f, Ytranslation - 5.0f, 0.0f));
 	model = glm::scale(model, vec3(10.0f));
 	/**/
-	//model = glm::translate(model, pos);
 
-	mat4 mv = view * model;
-
-	PBRprog.setUniform("ModelViewMatrix", mv);
-	PBRprog.setUniform("NormalMatrix", glm::mat3(mv));
-	PBRprog.setUniform("MVP", projection * mv);
+	setMatrices(PBRprog, 3);
 	mesh->render();
 	prog.use();
 
