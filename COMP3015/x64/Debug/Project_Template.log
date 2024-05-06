@@ -1,7 +1,6 @@
 ﻿  scenebasic_uniform.cpp
 C:\--------------------workspace laptop\comp3015\COMP3015-70PCNT\scenebasic_uniform.cpp(47,14): warning C4305: 'argument': truncation from 'double' to 'GLfloat'
-C:\--------------------workspace laptop\comp3015\COMP3015-70PCNT\scenebasic_uniform.cpp(164,29): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
-C:\--------------------workspace laptop\comp3015\COMP3015-70PCNT\scenebasic_uniform.cpp(172,21): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-C:\--------------------workspace laptop\comp3015\COMP3015-70PCNT\scenebasic_uniform.cpp(317,16): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-C:\--------------------workspace laptop\comp3015\COMP3015-70PCNT\scenebasic_uniform.cpp(318,16): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+C:\--------------------workspace laptop\comp3015\COMP3015-70PCNT\scenebasic_uniform.cpp(174,21): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+C:\--------------------workspace laptop\comp3015\COMP3015-70PCNT\scenebasic_uniform.cpp(337,16): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+C:\--------------------workspace laptop\comp3015\COMP3015-70PCNT\scenebasic_uniform.cpp(338,16): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
   Project_Template.vcxproj -> C:\--------------------workspace laptop\comp3015\COMP3015-70PCNT\x64\Debug\COMP3015.exe

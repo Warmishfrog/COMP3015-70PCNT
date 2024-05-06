@@ -31,7 +31,9 @@ private:
     GLuint Rock, Lava;
     SkyBox Sky;
 
-    glm::vec4 lightPos;
+    glm::vec4 lightPosPBR;
+	float lightAnglePBR, lightRotationSpeed;
+    void drawSpot(const glm::vec3& pos, float rough, int metal, const glm::vec3& color);
 
     GLSLProgram prog, skyProg, spriteProg, PBRprog;
     void setMatrices(GLSLProgram &p, int progType);
@@ -48,7 +50,7 @@ public:
     void ProcessInput();
 	void CameraMovement();
     void initSprites();
-    void drawPBR(const glm::vec3& pos, float rough, int metal, const glm::vec3 & color);
+    void drawPBRmesh(const glm::vec3& pos, float rough, int metal, const glm::vec3 & color);
 };
 
 #endif // SCENEBASIC_UNIFORM_H

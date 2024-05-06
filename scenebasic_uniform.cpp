@@ -46,16 +46,17 @@ SceneBasic_Uniform::SceneBasic_Uniform() :
 	rockRing(2.5f * 2.0f, 0.4f * 2.0f, 50, 10), //(float MajorRadius, float MinorRadius, int numMajor, int numMinor)
 	lavaPool(0.2* 2.0f, 0.5f* 2.0f, 50, 10),
 	plane(150.0f, 150.0f, 1, 1), //(float xsize, float zsize, int xdivs, int zdivs)
-	Sky(150.0f),
-	lightPos(0.0f, 0.0f, 0.0f, 1.0f)
+	Sky(150.0f)
 {
 	mesh = ObjMesh::load("media/Skeleton/Skelly.obj", true); //load custom model here
+	mesh = ObjMesh::load("media/spot/spot_triangulated.obj", true); //load custom model here
 }
 
 void SceneBasic_Uniform::initScene()
 {
 	compile();
-	//glClearColor(0.5f, 0.5f, 0.5f, 1.0f); //
+	resize(640, 400);
+	glClearColor(0.5f, 0.5f, 0.5f, 1.0f); //
 
 	glEnable(GL_DEPTH_TEST);
 	glDepthMask(GL_FALSE);
@@ -81,7 +82,7 @@ void SceneBasic_Uniform::initScene()
 	glDepthMask(GL_TRUE);
 
 	//The Fog is coming
-		prog.setUniform("Fog.MaxDist", 30.0f); //zero means no fog //30 default
+		prog.setUniform("Fog.MaxDist", 50.0f); //zero means no fog //30 default
 		prog.setUniform("Fog.MinDist", 1.0f);
 		prog.setUniform("Fog.Color", vec3(0.3f, 0.2f, 0.2f)); //RGB higher is brighter
 		/**/
@@ -110,14 +111,16 @@ void SceneBasic_Uniform::initScene()
 		prog.setUniform("Spot.La", vec3(0.5f, 0.4f, 0.4f));
 		prog.setUniform("Spot.Exponent", 100.0f);
 		prog.setUniform("Spot.Cutoff", glm::radians(45.0f));
+		/**/
 
+		//PBR type beat
 		PBRprog.use();
 		PBRprog.setUniform("Light[0].L", glm::vec3(45.0f));
-		PBRprog.setUniform("Light[0].Position", view * lightPos);
+		PBRprog.setUniform("Light[0].Position", view * glm::vec4(4.0f, 4.0f, 4.0f, 1.0f));
 		PBRprog.setUniform("Light[1].L", glm::vec3(0.3f));
-		PBRprog.setUniform("Light[1].Position", glm::vec4(0.0f, 0.15f, -1.0f, 0.0f));
+		PBRprog.setUniform("Light[1].Position", glm::vec4(0, 0.15f, -1.0f, 0));
 		PBRprog.setUniform("Light[2].L", glm::vec3(45.0f));
-		PBRprog.setUniform("Light[2].Position", view *  glm::vec4(-7.0f, 3.0f, 7.0f, 1.0f));
+		PBRprog.setUniform("Light[2].Position", view *  glm::vec4(-7, 3, 7, 1));
 		prog.use();
 		
 }
@@ -161,19 +164,33 @@ void SceneBasic_Uniform::update( float t )
 	tPrev = t;
 	angle += 2.0f * deltaT;
 	if (angle > glm::two_pi<float>()) angle -= glm::two_pi<float>();
-	Ytranslation = (sin(0.8*t) * 0.2f); //skeleton bob
-
+	Ytranslation = (sin(0.8f*t) * 0.2f); //skeleton bob
 
 	ProcessInput();
 }
 
 void SceneBasic_Uniform::render()
 {
-	float currentFrame = glfwGetTime();
+	float currentFrame = glfwGetTime(); 
 	deltaTime = currentFrame - lastFrame;
 	lastFrame = currentFrame;
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	PBRprog.use();
+	PBRprog.setUniform("Light[0].Position", view * lightPosPBR);
+	model = glm::mat4(1.0f);
+	PBRprog.setUniform("Material.Rough", 0.9f);
+	PBRprog.setUniform("Material.Metal", 0);
+	PBRprog.setUniform("Material.Color", glm::vec3(0.2f));
+	glm::mat4 mv2 = view * model;
+	PBRprog.setUniform("ModelViewMatrix", mv2);
+	PBRprog.setUniform("NormalMatrix", glm::mat3(mv2));
+	PBRprog.setUniform("MVP", projection * mv2);
+	plane.render();
+
+	prog.use();
+
 
 	CameraMovement();
 
@@ -209,7 +226,10 @@ void SceneBasic_Uniform::render()
 		mesh->render();
 		/**/
 
-		drawPBR(glm::vec3(1.5f, 0.0f, 3.0f), 0.4f, 1, glm::vec3(0.5f));
+		PBRprog.use();
+		PBRprog.setUniform("Light[0].Position", view * lightPosPBR);
+		prog.use();
+		//drawPBRmesh(glm::vec3(0.0f), 0.4f, 0, glm::vec3(0.5f, 0.4f, 0.4f));
 
 	// Render the rock ring
 		prog.setUniform("Material.Kd", vec3(0.9f, 0.9f, 0.9f));
@@ -246,7 +266,7 @@ void SceneBasic_Uniform::render()
 		model = mat4(1.0f);
 		model = glm::translate(model, vec3(0.0f, -0.45f, 0.0f));
 		setMatrices(prog, 1);
-		plane.render();
+		//plane.render();
 		
 		spriteProg.use();
 		model = mat4(1.0f);
@@ -341,7 +361,7 @@ void SceneBasic_Uniform::CameraMovement()
 	{
 		cameraPos = glm::vec3(10.0f, 2.5f, 10.0f);
 	}
-	cameraPos.y = 2.0f;
+	//cameraPos.y = 2.0f;
 	view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
 }
 
@@ -385,25 +405,29 @@ void SceneBasic_Uniform::initSprites()
 	prog.use();
 }
 
-void SceneBasic_Uniform::drawPBR(const glm::vec3& pos, float rough, int metal, const glm::vec3& color)
+void SceneBasic_Uniform::drawPBRmesh(const glm::vec3& pos, float rough, int metal, const glm::vec3& color)
 {
 	PBRprog.use();
-	PBRprog.setUniform("Light[0].Position", view * lightPos);
-	model = mat4(1.0f);
 	PBRprog.setUniform("Material.Rough", rough);
 	PBRprog.setUniform("Material.Metal", metal);
 	PBRprog.setUniform("Material.Color", color);
 	//animation
+	model = mat4(1.0f);
+	/*/
 	model = glm::rotate(model, glm::radians(-45.0f), vec3(1.0f, 0.0f, 0.0f));
 	model = glm::rotate(model, glm::radians(45.0f), vec3(0.0f, 1.0f, 0.0f));
 	model = glm::rotate(model, glm::radians(20.0f), vec3(0.0f, 0.0f, 1.0f));
 	model = glm::translate(model, vec3(0.0f, Ytranslation - 5.0f, 0.0f));
 	model = glm::scale(model, vec3(10.0f));
+	/**/
+	//model = glm::translate(model, pos);
 
 	mat4 mv = view * model;
+
 	PBRprog.setUniform("ModelViewMatrix", mv);
 	PBRprog.setUniform("NormalMatrix", glm::mat3(mv));
 	PBRprog.setUniform("MVP", projection * mv);
 	mesh->render();
 	prog.use();
+
 }

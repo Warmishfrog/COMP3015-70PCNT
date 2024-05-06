@@ -1,6 +1,6 @@
 #version 460
 
-const float PI = 3.14159265359;
+const float PI = 3.14159265358979323846;
 
 in vec3 Position;
 in vec3 Normal;
@@ -42,7 +42,7 @@ vec3 schlickFresnel( float lDothH)
 	{
 		f0 = Material.Color;
 	}
-	return f0 + (1.0 - f0) * pow(1.0 - lDothH, 5.0);
+	return f0 + (1.0 - f0) * pow(1.0 - lDothH, 5);
 }
 
 vec3 microfacetModel(int lightIdx, vec3 position, vec3 n)
@@ -66,7 +66,7 @@ vec3 microfacetModel(int lightIdx, vec3 position, vec3 n)
 	}
 
 	vec3 v = normalize(-position);
-	vec3 h = normalize(l + v);
+	vec3 h = normalize(v + l);
 	float nDotH = dot (n, h);
 	float lDotH = dot(l, h);
 	float nDotL = max( dot(n,l), 0.0);
@@ -87,5 +87,5 @@ void main()
 
  //gamma 
  sum = pow(sum, vec3(1.0/2.2));
- FragColor = vec4(sum, 1.0);
+ FragColor = vec4(sum, 1);
 }
