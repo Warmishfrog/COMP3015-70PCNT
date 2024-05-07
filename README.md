@@ -15,8 +15,8 @@ o	W, A, S, D for directional movement
 o	Mouse for pitch and yaw movement
 o	Arrow keys for pitch and yaw movement
 •	Gamification (World Border & Player View)
-YouTube link: BLANK 
-Model Skeleton used: https://www.turbosquid.com/3d-models/3d-model-lowpolyskeletonrigged-1970201
-Github: https://github.com/Warmishfrog/COMP3015-70PCNT
+YouTube link: [https://youtu.be/adW-IR3odwk]
+Model Skeleton used: [https://www.turbosquid.com/3d-models/3d-model-lowpolyskeletonrigged-1970201]
+Github: [https://github.com/Warmishfrog/COMP3015-70PCNT]
 
 
